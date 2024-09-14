@@ -21,18 +21,25 @@ func newLocalClient(log *log.Helper, config *conf.OssLocalConfig) (*localClient,
 }
 
 func (c *localClient) UploadFile(file multipart.File, path string) (string, error) {
+
 	path = filepath.Join(c.dir, path)
+
 	dir := filepath.Dir(path)
 
 	if err := os.MkdirAll(dir, 0744); err != nil {
 		return "", err
 	}
+
 	out, err := os.Create(path)
+
 	if err != nil {
 		return "", err
 	}
+
 	defer out.Close()
 
 	_, err = io.Copy(out, file)
+
 	return "/", err
+
 }

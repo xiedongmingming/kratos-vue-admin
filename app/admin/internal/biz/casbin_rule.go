@@ -30,11 +30,15 @@ func NewCasbinRuleUseCase(repo CasbinRuleRepo, logger log.Logger) *CasbinRuleUse
 }
 
 func (c *CasbinRuleUseCase) UpdateCasbin(ctx context.Context, roleKey string, apis []*pb.ApiBase) error {
+
 	var rules [][]string
+
 	for _, api := range apis {
 		rules = append(rules, []string{roleKey, api.Path, api.Method})
 	}
+
 	return c.repo.UpdateCasbin(ctx, roleKey, rules)
+
 }
 
 func (c *CasbinRuleUseCase) GetPolicyPathByRoleId(roleKey string) [][]string {

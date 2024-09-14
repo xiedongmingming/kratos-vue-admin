@@ -34,32 +34,46 @@ func NewSysMenusUseCase(repo SysMenuRepo, logger log.Logger) *SysMenuUseCase {
 }
 
 func (m *SysMenuUseCase) CreateMenus(ctx context.Context, menu *model.SysMenu) (*model.SysMenu, error) {
+
 	claims := authz.MustFromContext(ctx)
+
 	menu.CreateBy = claims.Nickname
 
 	err := m.repo.Create(ctx, menu)
+
 	return menu, err
+
 }
 
 func (m *SysMenuUseCase) UpdateMenus(ctx context.Context, menu *model.SysMenu) (*model.SysMenu, error) {
+
 	claims := authz.MustFromContext(ctx)
+
 	menu.UpdateBy = claims.Nickname
 
 	err := m.repo.Save(ctx, menu)
+
 	return menu, err
+
 }
 
 func (m *SysMenuUseCase) DeleteMenus(ctx context.Context, id int64) error {
+
 	// 删除父级菜单时同时删除子菜单，否则获取菜单会报错
 	allChildrenMenus, err := m.repo.GetAllChildren(ctx, id)
+
 	if err != nil {
 		return pb.ErrorDatabaseErr("获取所有子菜单失败:", err.Error())
 	}
+
 	err = m.repo.DeleteMultiple(ctx, allChildrenMenus)
+
 	if err != nil {
 		return pb.ErrorDatabaseErr("删除子菜单失败:", err.Error())
 	}
+
 	return m.repo.Delete(ctx, id)
+
 }
 
 func (m *SysMenuUseCase) GetMenus(ctx context.Context, id int64) (*model.SysMenu, error) {
@@ -78,25 +92,38 @@ type MenuTree struct {
 }
 
 func (m *SysMenuUseCase) ListByNameStatus(ctx context.Context, menuName string, status int32) ([]*model.SysMenu, error) {
+
 	return m.repo.FindByNameStatus(ctx, menuName, status)
+
 }
 
 func (m *SysMenuUseCase) RoleMenuTreeSelect(ctx context.Context, req *pb.RoleMenuTreeSelectRequest) (*pb.RoleMenuTreeSelectReply, error) {
+
 	var err error
+
 	result, err := m.repo.SelectMenuLabel(model.SysMenu{})
+
 	if err != nil {
 		return nil, err
 	}
+
 	menuIds := make([]int32, 0)
+
 	if req.RoleId != 0 {
+
 		menuIds, err = m.repo.GetRoleMenuId(ctx, req.RoleId)
+
 		if err != nil {
 			return nil, err
 		}
+
 	}
+
 	reply := &pb.RoleMenuTreeSelectReply{
 		Menus:       result,
 		CheckedKeys: menuIds,
 	}
+
 	return reply, err
+
 }

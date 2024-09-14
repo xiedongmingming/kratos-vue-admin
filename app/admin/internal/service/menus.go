@@ -20,11 +20,13 @@ type MenusService struct {
 }
 
 func NewMenusService(menuUseCase *biz.SysMenuUseCase, roleMenuUseCase *biz.SysRoleMenuUseCase, logger log.Logger) *MenusService {
+
 	return &MenusService{
 		menuUseCase:     menuUseCase,
 		roleMenuUseCase: roleMenuUseCase,
 		log:             log.NewHelper(log.With(logger, "module", "service/menus")),
 	}
+
 }
 
 func (s *MenusService) CreateMenus(ctx context.Context, req *pb.CreateMenusRequest) (*pb.CreateMenusReply, error) {
@@ -47,16 +49,21 @@ func (s *MenusService) CreateMenus(ctx context.Context, req *pb.CreateMenusReque
 		Status:     req.Status,
 		Remark:     req.Remark,
 	})
+
 	if err != nil {
 		return nil, err
 	}
+
 	claims := authz.MustFromContext(ctx)
 
 	permissions, err := s.roleMenuUseCase.GetPermission(ctx, claims.RoleID)
+
 	if err != nil {
 		return nil, err
 	}
+
 	menus, err := s.roleMenuUseCase.FindMenuByRoleId(ctx, claims.RoleID)
+
 	if err != nil {
 		return nil, err
 	}
@@ -65,6 +72,7 @@ func (s *MenusService) CreateMenus(ctx context.Context, req *pb.CreateMenusReque
 		Menus:       convertToMenuTree(menus),
 		Permissions: permissions,
 	}, nil
+
 }
 func (s *MenusService) UpdateMenus(ctx context.Context, req *pb.UpdateMenusRequest) (*pb.UpdateMenusReply, error) {
 
@@ -87,16 +95,21 @@ func (s *MenusService) UpdateMenus(ctx context.Context, req *pb.UpdateMenusReque
 		Status:     req.Status,
 		Remark:     req.Remark,
 	})
+
 	if err != nil {
 		return nil, err
 	}
+
 	claims := authz.MustFromContext(ctx)
 
 	permissions, err := s.roleMenuUseCase.GetPermission(ctx, claims.RoleID)
+
 	if err != nil {
 		return nil, err
 	}
+
 	menus, err := s.roleMenuUseCase.FindMenuByRoleId(ctx, claims.RoleID)
+
 	if err != nil {
 		return nil, err
 	}
@@ -105,15 +118,21 @@ func (s *MenusService) UpdateMenus(ctx context.Context, req *pb.UpdateMenusReque
 		Menus:       convertToMenuTree(menus),
 		Permissions: permissions,
 	}, nil
+
 }
 func (s *MenusService) DeleteMenus(ctx context.Context, req *pb.DeleteMenusRequest) (*pb.DeleteMenusReply, error) {
+
 	if err := s.menuUseCase.DeleteMenus(ctx, req.Id); err != nil {
 		return nil, err
 	}
+
 	return &pb.DeleteMenusReply{}, nil
+
 }
 func (s *MenusService) GetMenus(ctx context.Context, req *pb.GetMenusRequest) (*pb.GetMenusReply, error) {
+
 	menu, err := s.menuUseCase.GetMenus(ctx, req.Id)
+
 	if err != nil {
 		return nil, err
 	}
@@ -141,9 +160,12 @@ func (s *MenusService) GetMenus(ctx context.Context, req *pb.GetMenusRequest) (*
 		CreatedAt:   util.NewTimestamp(menu.CreatedAt),
 		UpdatedAt:   util.NewTimestamp(menu.UpdatedAt),
 	}, nil
+
 }
 func (s *MenusService) GetMenusTree(ctx context.Context, req *pb.GetMenusTreeRequest) (*pb.GetMenusTreeReply, error) {
+
 	menuList, err := s.menuUseCase.ListByNameStatus(ctx, "", 0)
+
 	if err != nil {
 		return nil, err
 	}
@@ -151,48 +173,72 @@ func (s *MenusService) GetMenusTree(ctx context.Context, req *pb.GetMenusTreeReq
 	return &pb.GetMenusTreeReply{
 		List: convertToSimpleMenu(menuList),
 	}, nil
+
 }
 
 func convertToSimpleMenu(sysMenus []*model.SysMenu) []*pb.SimpleMenu {
+
 	menuMap := make(map[int64]*pb.SimpleMenu)
+
 	var rootMenus []*pb.SimpleMenu
 
 	// 构建菜单映射
 	for _, sysMenu := range sysMenus {
+
 		menu := &pb.SimpleMenu{
 			MenuId:   sysMenu.ID,
 			MenuName: sysMenu.MenuName,
 		}
+
 		menuMap[sysMenu.ID] = menu
+
 	}
 
 	// 构建菜单树
 	for _, sysMenu := range sysMenus {
+
 		menu := menuMap[sysMenu.ID]
+
 		if sysMenu.ParentID == 0 {
+
 			rootMenus = append(rootMenus, menu)
+
 		} else {
+
 			parentMenu := menuMap[sysMenu.ParentID]
+
 			if parentMenu != nil {
 				parentMenu.Children = append(parentMenu.Children, menu)
 			}
+
 		}
+
 	}
 
 	return rootMenus
+
 }
 
 func (s *MenusService) ListMenus(ctx context.Context, req *pb.ListMenusRequest) (*pb.ListMenusReply, error) {
+
 	menuList, err := s.menuUseCase.ListByNameStatus(ctx, req.MenuName, req.Status)
+
 	if err != nil {
 		return nil, err
 	}
+
 	var reqData []*pb.MenuTree
+
 	if req.MenuName == "" {
+
 		reqData = convertToMenuTree(menuList)
+
 	} else {
+
 		reqData = make([]*pb.MenuTree, len(menuList))
+
 		for i, menu := range menuList {
+
 			reqData[i] = &pb.MenuTree{
 				MenuId:      menu.ID,
 				MenuName:    menu.MenuName,
@@ -216,23 +262,30 @@ func (s *MenusService) ListMenus(ctx context.Context, req *pb.ListMenusRequest) 
 				CreateTime:  util.NewTimestamp(menu.CreatedAt),
 				UpdateTime:  util.NewTimestamp(menu.UpdatedAt),
 			}
+
 		}
+
 	}
 
 	return &pb.ListMenusReply{
 		List: reqData,
 	}, nil
+
 }
 
 func (s *MenusService) RoleMenuTreeSelect(ctx context.Context, req *pb.RoleMenuTreeSelectRequest) (*pb.RoleMenuTreeSelectReply, error) {
+
 	return s.menuUseCase.RoleMenuTreeSelect(ctx, req)
+
 }
 
 func convertToMenuTree(sysMenus []*model.SysMenu) []*pb.MenuTree {
+
 	menuMap := make(map[int64]*pb.MenuTree)
 
 	// 创建 MenuTree 节点并将其存储在 menuMap 中
 	for _, menu := range sysMenus {
+
 		menuTree := &pb.MenuTree{
 			MenuId:      menu.ID,
 			MenuName:    menu.MenuName,
@@ -257,29 +310,43 @@ func convertToMenuTree(sysMenus []*model.SysMenu) []*pb.MenuTree {
 			UpdateTime:  util.NewTimestamp(menu.UpdatedAt),
 			Children:    []*pb.MenuTree{},
 		}
+
 		menuMap[menu.ID] = menuTree
+
 	}
 
 	// 构建 MenuTree 的层级关系
 	var rootMenuTrees []*pb.MenuTree
+
 	for _, menu := range sysMenus {
+
 		if menu.ParentID == 0 {
+
 			rootMenuTrees = append(rootMenuTrees, menuMap[menu.ID])
+
 		} else {
+
 			parentMenuTree, ok := menuMap[menu.ParentID]
+
 			if ok {
 				parentMenuTree.Children = append(parentMenuTree.Children, menuMap[menu.ID])
 			}
+
 		}
+
 	}
 
 	return rootMenuTrees
+
 }
 
 // Build 构建前端路由
 func Build(menus []*pb.MenuTree) []*pb.MenuTreeAuth {
+
 	rvs := make([]*pb.MenuTreeAuth, 0)
+
 	for _, ms := range menus {
+
 		rv := &pb.MenuTreeAuth{
 			Name:      ms.MenuName,
 			Path:      ms.Path,
@@ -299,8 +366,13 @@ func Build(menus []*pb.MenuTree) []*pb.MenuTreeAuth {
 		if ms.Permission != "" {
 			rv.Meta.Auth = strings.Split(ms.Permission, ",")
 		}
+
 		rv.Children = Build(ms.Children)
+
 		rvs = append(rvs, rv)
+
 	}
+
 	return rvs
+
 }

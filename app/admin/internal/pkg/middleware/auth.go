@@ -15,19 +15,23 @@ import (
 )
 
 func AuthWhiteListMatcher() selector.MatchFunc {
+
 	whiteList := make(map[string]struct{})
 	whiteList["/api.admin.v1.Sysuser/Login"] = struct{}{}
 	whiteList["/api.admin.v1.Sysuser/GetCaptcha"] = struct{}{}
 	whiteList["/api.admin.v1.TencentCallback/TencentCallback"] = struct{}{}
+
 	return func(ctx context.Context, operation string) bool {
 		if _, ok := whiteList[operation]; ok {
 			return false
 		}
 		return true
 	}
+
 }
 
 func Auth(s *conf.Auth, repo biz.CasbinRuleRepo) middleware.Middleware {
+
 	return selector.Server(
 		jwt.Server(
 			func(token *jwtV4.Token) (interface{}, error) { return []byte(s.JwtKey), nil },
@@ -41,4 +45,5 @@ func Auth(s *conf.Auth, repo biz.CasbinRuleRepo) middleware.Middleware {
 			casbin.WithAutoLoadPolicy(true, 30*time.Second),
 		),
 	).Match(AuthWhiteListMatcher()).Build()
+
 }

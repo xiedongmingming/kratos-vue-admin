@@ -15,9 +15,13 @@ var ProviderSet = wire.NewSet(
 )
 
 func NewOssRepo(c *conf.Oss, logger log.Logger) biz.OssRepo {
+
 	logs := log.NewHelper(log.With(logger, "module", "app/admin/internal/pkg/oss"))
+
 	var err error
+
 	var repo biz.OssRepo
+
 	switch c.Use {
 	case conf.OssUseMode_aliyun:
 		repo, err = newAliyunClient(logs, c.Aliyun)
@@ -26,8 +30,11 @@ func NewOssRepo(c *conf.Oss, logger log.Logger) biz.OssRepo {
 	default:
 		err = errors.New("invalid oss use mod")
 	}
+
 	if err != nil {
 		panic(err)
 	}
+
 	return repo
+
 }

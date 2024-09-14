@@ -11,28 +11,36 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 )
 
-type RolesService struct {
+type RolesService struct { // 相当于CONTROLLER
 	pb.UnimplementedRolesServer
-	rc     *biz.SysRoleUseCase
-	casbin *biz.CasbinRuleUseCase
+	rc     *biz.SysRoleUseCase    // 相当于SERVICE
+	casbin *biz.CasbinRuleUseCase // 相当于SERVICE
 	log    *log.Helper
 }
 
 func NewRolesService(rc *biz.SysRoleUseCase, logger log.Logger, casbin *biz.CasbinRuleUseCase) *RolesService {
+
 	return &RolesService{
 		rc:     rc,
 		casbin: casbin,
 		log:    log.NewHelper(log.With(logger, "module", "service/roles")),
 	}
+
 }
 
+// 对外接口
 func (r *RolesService) ListRoles(ctx context.Context, req *pb.ListRolesRequest) (*pb.ListRolesReply, error) {
+
 	roleList, total, err := r.rc.ListPage(ctx, req.RoleName, req.RoleKey, req.Status, req.PageNum, req.PageSize)
+
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]*pb.RoleData, len(roleList))
+
 	for i, d := range roleList {
+
 		data[i] = &pb.RoleData{
 			RoleId:     d.ID,
 			RoleName:   d.RoleName,
@@ -48,24 +56,32 @@ func (r *RolesService) ListRoles(ctx context.Context, req *pb.ListRolesRequest) 
 		}
 
 	}
-	return &pb.ListRolesReply{
+
+	return &pb.ListRolesReply{ // 响应数据
 		Total:    total,
 		PageNum:  req.PageNum,
 		PageSize: req.PageSize,
 		Data:     data,
 	}, nil
+
 }
 
 func (r *RolesService) GetRoles(ctx context.Context, req *pb.GetRolesRequest) (*pb.GetRolesReply, error) {
-	role, err := r.rc.GetRole(ctx, req.Id)
+
+	role, err := r.rc.GetRole(ctx, req.Id) // 根据ID
+
 	if err != nil {
 		return nil, err
 	}
-	menuIds, err := r.rc.GetRoleMenuId(ctx, role.ID)
+
+	menuIds, err := r.rc.GetRoleMenuId(ctx, role.ID) // 获取菜单
+
 	if err != nil {
 		return nil, err
 	}
+
 	return &pb.GetRolesReply{
+
 		Role: &pb.RoleData{
 			RoleId:     role.ID,
 			RoleName:   role.RoleName,
@@ -81,12 +97,15 @@ func (r *RolesService) GetRoles(ctx context.Context, req *pb.GetRolesRequest) (*
 			UpdateTime: util.NewTimestamp(role.UpdatedAt),
 		},
 	}, nil
+
 }
 
 func (r *RolesService) CreateRoles(ctx context.Context, req *pb.CreateRolesRequest) (*pb.CreateRolesReply, error) {
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
+
 	_, err := r.rc.CreateRole(ctx, &model.SysRole{
 		ParentID:      req.ParentId,
 		RoleName:      req.RoleName,
@@ -99,9 +118,11 @@ func (r *RolesService) CreateRoles(ctx context.Context, req *pb.CreateRolesReque
 	}, req.MenuIds, req.ApiIds)
 
 	return &pb.CreateRolesReply{}, err
+
 }
 
 func (r *RolesService) UpdateRoles(ctx context.Context, req *pb.UpdateRolesRequest) (*pb.UpdateRolesReply, error) {
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -117,21 +138,33 @@ func (r *RolesService) UpdateRoles(ctx context.Context, req *pb.UpdateRolesReque
 		DefaultRouter: req.DefaultRouter,
 		Remark:        req.Remark,
 	}, req.MenuIds, req.ApiIds)
+
 	return &pb.UpdateRolesReply{}, err
+
 }
 
 func (r *RolesService) ChangeRoleStatus(ctx context.Context, req *pb.ChangeRoleStatusRequest) (*pb.ChangeRoleStatusReply, error) {
+
 	err := r.rc.ChangeRoleStatus(ctx, req.RoleId, req.Status)
+
 	return &pb.ChangeRoleStatusReply{}, err
+
 }
 
 func (r *RolesService) DataScope(ctx context.Context, req *pb.DataScopeRequest) (*pb.DataScopeReply, error) {
+
 	err := r.rc.ChangeDataScope(ctx, req.RoleId, req.DataScope)
+
 	return &pb.DataScopeReply{}, err
+
 }
 
 func (r *RolesService) DeleteRoles(ctx context.Context, req *pb.DeleteRolesRequest) (*pb.DeleteRolesReply, error) {
+
 	ids := util.Split2Int64Slice(req.Id)
+
 	err := r.rc.DeleteRole(ctx, ids)
+
 	return &pb.DeleteRolesReply{}, err
+
 }

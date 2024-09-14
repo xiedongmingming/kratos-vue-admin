@@ -18,19 +18,26 @@ type PostService struct {
 }
 
 func NewPostService(pc *biz.SysPostUseCase, logger log.Logger) *PostService {
+
 	return &PostService{
 		pc:  pc,
 		log: log.NewHelper(log.With(logger, "module", "service/post")),
 	}
+
 }
 
 func (s *PostService) ListPost(ctx context.Context, req *pb.ListPostRequest) (*pb.ListPostReply, error) {
+
 	postList, total, err := s.pc.ListPost(ctx, req.PostName, req.PostCode, req.Status, req.PageNum, req.PageSize)
+
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]*pb.PostData, len(postList))
+
 	for i, d := range postList {
+
 		data[i] = &pb.PostData{
 			PostId:     d.ID,
 			PostName:   d.PostName,
@@ -43,6 +50,7 @@ func (s *PostService) ListPost(ctx context.Context, req *pb.ListPostRequest) (*p
 			CreateTime: util.NewTimestamp(d.CreatedAt),
 			UpdateTime: util.NewTimestamp(d.UpdatedAt),
 		}
+
 	}
 
 	return &pb.ListPostReply{
@@ -51,11 +59,14 @@ func (s *PostService) ListPost(ctx context.Context, req *pb.ListPostRequest) (*p
 		Total:    total,
 		Data:     data,
 	}, nil
+
 }
 func (s *PostService) CreatePost(ctx context.Context, req *pb.CreatePostRequest) (*pb.CreatePostReply, error) {
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
+
 	_, err := s.pc.CreatePost(ctx, &model.SysPost{
 		PostName: req.PostName,
 		PostCode: req.PostCode,
@@ -63,12 +74,16 @@ func (s *PostService) CreatePost(ctx context.Context, req *pb.CreatePostRequest)
 		Status:   req.Status,
 		Remark:   req.Remark,
 	})
+
 	return &pb.CreatePostReply{}, err
+
 }
 func (s *PostService) UpdatePost(ctx context.Context, req *pb.UpdatePostRequest) (*pb.UpdatePostReply, error) {
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
+
 	_, err := s.pc.UpdatePost(ctx, &model.SysPost{
 		ID:       req.PostId,
 		PostName: req.PostName,
@@ -77,10 +92,16 @@ func (s *PostService) UpdatePost(ctx context.Context, req *pb.UpdatePostRequest)
 		Status:   req.Status,
 		Remark:   req.Remark,
 	})
+
 	return &pb.UpdatePostReply{}, err
+
 }
 func (s *PostService) DeletePost(ctx context.Context, req *pb.DeletePostRequest) (*pb.DeletePostReply, error) {
+
 	ids := util.Split2Int64Slice(req.Id)
+
 	err := s.pc.DeletePost(ctx, ids)
+
 	return &pb.DeletePostReply{}, err
+
 }

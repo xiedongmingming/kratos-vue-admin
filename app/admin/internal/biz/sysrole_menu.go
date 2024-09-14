@@ -26,7 +26,9 @@ func NewSysRoleMenuUseCase(repo SysRoleMenuRepo, logger log.Logger) *SysRoleMenu
 }
 
 func (r *SysRoleMenuUseCase) CreateRoleMenus(ctx context.Context, role *model.SysRole, menuIDs []int64) error {
+
 	roleMenus := make([]*model.SysRoleMenu, len(menuIDs))
+
 	for i, menuID := range menuIDs {
 		roleMenus[i] = &model.SysRoleMenu{
 			MenuID:   menuID,
@@ -34,7 +36,9 @@ func (r *SysRoleMenuUseCase) CreateRoleMenus(ctx context.Context, role *model.Sy
 			RoleName: role.RoleName,
 		}
 	}
+
 	return r.repo.Create(ctx, roleMenus...)
+
 }
 
 func (r *SysRoleMenuUseCase) DeleteByRoleId(ctx context.Context, roleIDs ...int64) error {

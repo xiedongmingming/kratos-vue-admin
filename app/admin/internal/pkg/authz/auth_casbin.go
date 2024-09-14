@@ -37,21 +37,31 @@ func NewSecurityUser() authz.SecurityUser {
 }
 
 func (su *securityUser) ParseFromContext(ctx context.Context) error {
+
 	claims, err := FromContext(ctx)
+
 	if err != nil {
 		return err
 	}
+
 	su.AuthorityId = claims.RoleKey
+
 	ts, ok := transport.FromServerContext(ctx)
+
 	if !ok {
 		return ErrClaimsMiss
 	}
+
 	su.Path = ts.Operation()
+
 	ht, ok := ts.(http.Transporter)
+
 	if !ok {
 		return ErrClaimsMiss
 	}
+
 	su.Method = ht.Request().Method
+
 	return nil
 }
 

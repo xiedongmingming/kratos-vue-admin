@@ -19,19 +19,26 @@ type DictDataService struct {
 }
 
 func NewDictDataService(pc *biz.SysDictDatumUseCase, logger log.Logger) *DictDataService {
+
 	return &DictDataService{
 		pc:  pc,
 		log: log.NewHelper(log.With(logger, "module", "service/dict_data")),
 	}
+
 }
 
 func (s *DictDataService) ListDictData(ctx context.Context, req *pb.ListDictDataRequest) (*pb.ListDictDataReply, error) {
+
 	postList, total, err := s.pc.ListDictData(ctx, req.DictLabel, req.DictType, req.Status, req.PageNum, req.PageSize)
+
 	if err != nil {
 		return nil, err
 	}
+
 	data := make([]*pb.DictDataContent, len(postList))
+
 	for i, d := range postList {
+
 		data[i] = &pb.DictDataContent{
 			DictCode:   uint32(d.DictCode),
 			DictType:   d.DictType,
@@ -48,6 +55,7 @@ func (s *DictDataService) ListDictData(ctx context.Context, req *pb.ListDictData
 			CreateTime: util.NewTimestamp(d.CreateTime),
 			UpdateTime: util.NewTimestamp(d.UpdateTime),
 		}
+
 	}
 
 	return &pb.ListDictDataReply{
@@ -56,11 +64,14 @@ func (s *DictDataService) ListDictData(ctx context.Context, req *pb.ListDictData
 		Total:    total,
 		List:     data,
 	}, nil
+
 }
 func (s *DictDataService) CreateDictData(ctx context.Context, req *pb.CreateDictDataRequest) (*pb.CreateDictDataReply, error) {
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
+
 	_, err := s.pc.CreateDictData(ctx, &model.SysDictDatum{
 		DictType:  req.DictType,
 		DictLabel: req.DictLabel,
@@ -69,12 +80,16 @@ func (s *DictDataService) CreateDictData(ctx context.Context, req *pb.CreateDict
 		Status:    req.Status,
 		Remark:    req.Remark,
 	})
+
 	return &pb.CreateDictDataReply{}, err
+
 }
 func (s *DictDataService) UpdateDictData(ctx context.Context, req *pb.UpdateDictDataRequest) (*pb.UpdateDictDataReply, error) {
+
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
+
 	_, err := s.pc.UpdateDictData(ctx, &model.SysDictDatum{
 		DictCode:  req.DictCode,
 		DictType:  req.DictType,
@@ -84,10 +99,16 @@ func (s *DictDataService) UpdateDictData(ctx context.Context, req *pb.UpdateDict
 		Status:    req.Status,
 		Remark:    req.Remark,
 	})
+
 	return &pb.UpdateDictDataReply{}, err
+
 }
 func (s *DictDataService) DeleteDictData(ctx context.Context, req *pb.DeleteDictDataRequest) (*pb.DeleteDictDataReply, error) {
+
 	ids := util.Split2Int64Slice(strconv.FormatInt(req.DictCode, 10))
+
 	err := s.pc.DeleteDictData(ctx, ids)
+
 	return &pb.DeleteDictDataReply{}, err
+
 }
